@@ -49,6 +49,11 @@ src/
                    folder named for the feature (e.g. components/pricing/).
                    Created only once a feature has more than one component,
                    or a component that is clearly not reusable elsewhere.
+                   components/marketing/ is the first realized example:
+                   reusable marketing-page sections (Hero, FeatureGrid,
+                   LogoCloud, StatsGrid, CTASection) that compose ui/ and
+                   shared/ primitives but are domain-specific rather than
+                   generic layout helpers.
   config/          Static, typed configuration: site metadata, navigation
                    structures, feature flags, environment-derived constants.
   lib/             Framework-agnostic utilities, helpers, and business

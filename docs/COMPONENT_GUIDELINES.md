@@ -13,8 +13,8 @@ Three tiers, strictly separated (`PROJECT_BLUEPRINT.md` §3–4). A component ne
 | ----------- | ----------------------- | ------------------------------------- | --------------------------------------------------------------- |
 | Primitive   | `components/ui/`        | No — pure vocabulary                  | `Button`, `Input`, `Card`, `Dialog`, `Badge`, `Heading`, `Text` |
 | Composition | `components/shared/`    | Layout-aware, not page-specific       | `Container`, `Section`, `FadeIn`                                |
-| Chrome      | `components/layout/`    | Structural, appears on most/all pages | `Header`, `Footer`                                              |
-| Feature     | `components/[feature]/` | Page/feature-specific                 | `components/pricing/plan-card.tsx`                              |
+| Chrome      | `components/layout/`    | Structural, appears on most/all pages | `Header`, `Footer`, `Navbar`, `NavLink`, `MobileMenu`, `FooterColumn`, `FooterLink` |
+| Feature     | `components/[feature]/` | Page/feature-specific                 | `components/pricing/plan-card.tsx`, `components/marketing/hero.tsx` (`Hero`, `FeatureGrid`, `LogoCloud`, `StatsGrid`, `CTASection`) |
 
 If you're unsure which tier a new component belongs in, ask: _would this make sense in a completely different product with zero modification?_ If yes → `ui/`. If it composes `ui/` primitives into a reusable layout shape → `shared/`. If it only makes sense on one page or feature → the feature folder.
 
@@ -50,6 +50,8 @@ In this repo:
 - `Button` is a Client Component — it wraps `@base-ui/react/button`, which attaches pointer/keyboard event handlers and manages interactive data attributes (`data-pressed`, `data-focus-visible`, etc.) that only resolve client-side.
 - `Input` and `Dialog` are likewise Client Components for the same reason — they wrap interactive Base UI primitives.
 - `Container`, `Section`, `Heading`, `Text`, `Card`, `Badge` are Server Components — they render static markup with no client-only behavior. They accept `children`, which may themselves be Client Components, without becoming client themselves.
+- `MobileMenu` is a Client Component — it owns the mobile nav disclosure's open/close state locally. It's kept in its own file (`mobile-menu.tsx`), separate from `Navbar`/`NavLink` (`navbar.tsx`), because `"use client"` applies at the file level — mixing it into the same file would force those Server Components client too, the same reason `button.tsx` is split from `button-variants.ts`.
+- `Navbar`, `NavLink`, `Header`, `Hero`, `HeroContent`, `HeroActions`, `HeroMedia`, `FeatureGrid`, `FeatureCard`, `LogoCloud`, `StatsGrid`, `CTASection`, `Footer`, `FooterColumn`, and `FooterLink` are all Server Components — `Header` in particular is a Server Component precisely because the only interactive piece of the nav (the mobile disclosure) is delegated to `MobileMenu`.
 
 When adding a new primitive, default to Server. Add `"use client"` only when the compiler or a runtime error tells you the primitive needs it (state, effects, event handlers that must run in the browser, or a headless library that requires a client boundary).
 
