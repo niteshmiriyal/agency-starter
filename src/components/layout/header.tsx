@@ -6,7 +6,7 @@ import { Menu, X } from 'lucide-react';
 
 import { siteConfig } from '@/config/site';
 import { cn } from '@/lib/utils';
-import { buttonVariants } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button-variants';
 import { Container } from '@/components/shared/container';
 
 export function Header() {

@@ -8,7 +8,8 @@ import {
   Zap,
 } from 'lucide-react';
 
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
+import { buttonVariants } from '@/components/ui/button-variants';
 import { Section } from '@/components/shared/section';
 import { FadeIn } from '@/components/shared/fade-in';
 

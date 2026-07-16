@@ -1,7 +1,11 @@
 import { cn } from '@/lib/utils';
 
-type ContainerProps = React.HTMLAttributes<HTMLDivElement>;
+export type ContainerProps = React.HTMLAttributes<HTMLDivElement>;
 
+/**
+ * Enforces the product's shared max-width and horizontal gutter
+ * (DESIGN_SYSTEM.md §6) so every page draws from the same content grid.
+ */
 export function Container({ className, children, ...props }: ContainerProps) {
   return (
     <div
