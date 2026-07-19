@@ -43,12 +43,27 @@ src/
     shared/        Cross-page composition primitives (layout helpers,
                    animation wrappers, containers, section scaffolding).
                    Product-aware but not page-specific.
+      motion/      Framer Motion entrance/orchestration primitives
+                   (FadeIn, SlideUp, ScaleIn, Reveal, Stagger/StaggerItem,
+                   Presence) plus the MotionProvider that configures
+                   reduced-motion handling and default transitions
+                   app-wide. The only files in `shared/` that carry
+                   `"use client"`. See docs/MOTION_GUIDE.md.
+      layout/      Structural composition primitives (Stack, Cluster,
+                   Grid, SplitSection, MediaBlock) generalizing shapes
+                   otherwise hand-rolled per component. Server Components,
+                   no client boundary.
     layout/        Structural chrome that appears on most or all pages:
                    header, footer, navigation.
     [feature]/     Page- or feature-specific components, colocated under a
                    folder named for the feature (e.g. components/pricing/).
                    Created only once a feature has more than one component,
                    or a component that is clearly not reusable elsewhere.
+                   components/marketing/ is the first realized example:
+                   reusable marketing-page sections (Hero, FeatureGrid,
+                   LogoCloud, StatsGrid, CTASection) that compose ui/ and
+                   shared/ primitives but are domain-specific rather than
+                   generic layout helpers.
   config/          Static, typed configuration: site metadata, navigation
                    structures, feature flags, environment-derived constants.
   lib/             Framework-agnostic utilities, helpers, and business
@@ -170,7 +185,7 @@ Rules that govern this structure:
 - **TypeScript strict mode is always on; `any` is not used.** Where a type is genuinely unknown, `unknown` is used and narrowed properly. Untyped escape hatches are treated as bugs.
 - **No placeholder or "good enough for now" code ships.** A TODO left in committed code represents a decision that was deferred without a plan to resolve it — either the work is finished, or it is tracked as an explicit follow-up outside the code itself, not left as an inline comment implying someone will circle back.
 - **Functions and components do one thing.** If a function needs a comment to explain what it does step-by-step, it should likely be decomposed into smaller, well-named functions instead.
-- **Comments explain why, not what.** Code should be legible enough that *what* is obvious from names and structure; comments are reserved for non-obvious constraints, trade-offs, or the reasoning behind a decision that isn't visible in the code itself.
+- **Comments explain why, not what.** Code should be legible enough that _what_ is obvious from names and structure; comments are reserved for non-obvious constraints, trade-offs, or the reasoning behind a decision that isn't visible in the code itself.
 - **Errors are handled at the boundary where they're meaningful**, not swallowed silently and not caught reflexively everywhere. Every error path either recovers meaningfully or surfaces a clear, user-appropriate message.
 - **No dead code, no commented-out code, in committed work.** Version control is the history; the working tree reflects only what currently matters.
 - **Formatting and linting are automated and enforced**, not a matter of personal preference — Prettier and ESLint configuration in this repository is the single source of truth, and their output is not manually overridden.
@@ -212,7 +227,7 @@ Rules that govern this structure:
 
 - **`main` is always deployable.** Nothing is merged into `main` that is known to be broken, half-finished, or failing checks.
 - **Feature branches, short-lived.** Work happens on a descriptively named branch (`feature/`, `fix/`, `chore/` prefixes) scoped to a single piece of work, merged and deleted promptly rather than left to accumulate drift from `main`.
-- **Commits are atomic and descriptive.** Each commit represents one coherent change and explains *why* in its message, not just what changed — the diff already shows what changed.
+- **Commits are atomic and descriptive.** Each commit represents one coherent change and explains _why_ in its message, not just what changed — the diff already shows what changed.
 - **No direct pushes to `main` on client engagements** without review, once a project has more than one contributor. Solo-maintained internal tooling may relax this with explicit agreement.
 - **Pull requests are reviewed for correctness, adherence to this blueprint, and blast radius** before merge — not rubber-stamped.
 - **Force-pushes, history rewrites, and destructive operations are never performed on shared branches** without explicit, in-the-moment agreement from whoever else depends on that branch.
@@ -236,37 +251,44 @@ Rules that govern this structure:
 Before any page or feature is considered done, it clears the following:
 
 **Correctness**
+
 - [ ] Feature matches the agreed requirement; no scope silently added or dropped.
 - [ ] All interactive states (default, hover, focus, active, disabled, loading, error, empty) implemented and verified.
 - [ ] No console errors or warnings in development or production builds.
 
 **Accessibility**
+
 - [ ] Fully keyboard-operable; logical, visible focus order.
 - [ ] Passes automated accessibility scan with zero critical/serious issues.
 - [ ] Manually verified with a screen reader for any non-trivial interactive component.
 - [ ] Color contrast meets WCAG AA minimums (Section 10).
 
 **Performance**
+
 - [ ] Core Web Vitals within target budgets (Section 12) on a throttled connection/device profile.
 - [ ] Images optimized and correctly sized; no layout shift from images or fonts.
 - [ ] No unnecessary client-side JavaScript shipped for static content.
 
 **SEO**
+
 - [ ] Metadata (title, description, OG/Twitter) present and accurate for the route.
 - [ ] Heading hierarchy is valid and starts from a single `h1`.
 - [ ] Route included in the sitemap if intended for indexing.
 
 **Design & Consistency**
+
 - [ ] Only design-system tokens used for color, spacing, typography, and radius — no arbitrary one-off values.
 - [ ] Responsive behavior verified at all standard breakpoints and a few in-between widths.
 - [ ] Motion respects `prefers-reduced-motion` and stays within tokenized durations/easing.
 
 **Code Quality**
+
 - [ ] Lint, type-check, and build all pass cleanly.
 - [ ] No `any`, no dead code, no leftover debug statements or commented-out code.
 - [ ] Naming and file placement follow Sections 14–15.
 
 **Content**
+
 - [ ] Copy proofread; no lorem ipsum or placeholder text remains.
 - [ ] All links resolve; no broken internal or external references.
 

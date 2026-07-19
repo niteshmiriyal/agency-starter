@@ -9,12 +9,12 @@ Status: Living document. Practical companion to [`PROJECT_BLUEPRINT.md`](./PROJE
 
 Three tiers, strictly separated (`PROJECT_BLUEPRINT.md` §3–4). A component never imports "up" a tier.
 
-| Tier        | Path                    | Knows about product?                  | Examples                                                        |
-| ----------- | ----------------------- | ------------------------------------- | --------------------------------------------------------------- |
-| Primitive   | `components/ui/`        | No — pure vocabulary                  | `Button`, `Input`, `Card`, `Dialog`, `Badge`, `Heading`, `Text` |
-| Composition | `components/shared/`    | Layout-aware, not page-specific       | `Container`, `Section`, `FadeIn`                                |
-| Chrome      | `components/layout/`    | Structural, appears on most/all pages | `Header`, `Footer`                                              |
-| Feature     | `components/[feature]/` | Page/feature-specific                 | `components/pricing/plan-card.tsx`                              |
+| Tier        | Path                    | Knows about product?                  | Examples                                                                                                                            |
+| ----------- | ----------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Primitive   | `components/ui/`        | No — pure vocabulary                  | `Button`, `Input`, `Card`, `Dialog`, `Badge`, `Heading`, `Text`                                                                     |
+| Composition | `components/shared/`    | Layout-aware, not page-specific       | `Container`, `Section`, `FadeIn`                                                                                                    |
+| Chrome      | `components/layout/`    | Structural, appears on most/all pages | `Header`, `Footer`, `Navbar`, `NavLink`, `MobileMenu`, `FooterColumn`, `FooterLink`                                                 |
+| Feature     | `components/[feature]/` | Page/feature-specific                 | `components/pricing/plan-card.tsx`, `components/marketing/hero.tsx` (`Hero`, `FeatureGrid`, `LogoCloud`, `StatsGrid`, `CTASection`) |
 
 If you're unsure which tier a new component belongs in, ask: _would this make sense in a completely different product with zero modification?_ If yes → `ui/`. If it composes `ui/` primitives into a reusable layout shape → `shared/`. If it only makes sense on one page or feature → the feature folder.
 
@@ -50,6 +50,8 @@ In this repo:
 - `Button` is a Client Component — it wraps `@base-ui/react/button`, which attaches pointer/keyboard event handlers and manages interactive data attributes (`data-pressed`, `data-focus-visible`, etc.) that only resolve client-side.
 - `Input` and `Dialog` are likewise Client Components for the same reason — they wrap interactive Base UI primitives.
 - `Container`, `Section`, `Heading`, `Text`, `Card`, `Badge` are Server Components — they render static markup with no client-only behavior. They accept `children`, which may themselves be Client Components, without becoming client themselves.
+- `MobileMenu` is a Client Component — it owns the mobile nav disclosure's open/close state locally. It's kept in its own file (`mobile-menu.tsx`), separate from `Navbar`/`NavLink` (`navbar.tsx`), because `"use client"` applies at the file level — mixing it into the same file would force those Server Components client too, the same reason `button.tsx` is split from `button-variants.ts`.
+- `Navbar`, `NavLink`, `Header`, `Hero`, `HeroContent`, `HeroActions`, `HeroMedia`, `FeatureGrid`, `FeatureCard`, `LogoCloud`, `StatsGrid`, `CTASection`, `Footer`, `FooterColumn`, and `FooterLink` are all Server Components — `Header` in particular is a Server Component precisely because the only interactive piece of the nav (the mobile disclosure) is delegated to `MobileMenu`.
 
 When adding a new primitive, default to Server. Add `"use client"` only when the compiler or a runtime error tells you the primitive needs it (state, effects, event handlers that must run in the browser, or a headless library that requires a client boundary).
 
@@ -88,7 +90,25 @@ Follow `PROJECT_BLUEPRINT.md` §14–15 exactly:
 - Props type: `<ComponentName>Props` (`HeadingProps`).
 - One component family per file (a primitive and its tightly-coupled sub-parts — e.g. `Card`, `CardHeader`, `CardTitle` — share a file; unrelated primitives do not).
 
-## 7. Checklist Before Adding a New `ui/` Primitive
+## 7. Motion & Layout Primitives (`components/shared/motion/`, `components/shared/layout/`)
+
+Sprint 3 added a motion system and a layout system, both living in the `shared/` tier (composed, product-aware, reusable across any page). Usage-level documentation and examples live in [`MOTION_GUIDE.md`](./MOTION_GUIDE.md); this section covers the architecture.
+
+**Motion — one engine, thin presets, one deliberate exception.**
+
+- `MotionInView` (`components/shared/motion/motion-in-view.tsx`) is the internal, single-node viewport-trigger engine. `FadeIn`, `SlideUp`, and `ScaleIn` are each a ~10-line preset over it, differing only in their `variants` object — the viewport trigger (`once: true`, per DESIGN_SYSTEM.md §9) lives exactly once. `MotionInView` is not part of the public barrel (`components/shared/motion/index.ts`); import it directly only when a new single-node entrance genuinely needs the engine.
+- `Reveal` and `Stagger`/`StaggerItem` are **not** built on `MotionInView` — both animate more than one node under a single shared trigger (a curtain + content; a group of items), a shape the single-node engine doesn't fit. Don't force a future multi-node primitive through `MotionInView` either; give it its own trigger, matching this precedent.
+- **Reduced motion is handled once, globally**, not per component. `MotionProvider` (mounted in `app/layout.tsx`) sets Framer's `MotionConfig reducedMotion="user"`, which strips transform-based variant values (`x`/`y`/`scale`/`rotate`) tree-wide for users who prefer reduced motion, leaving opacity fades intact. No primitive in `shared/motion/` implements its own `prefers-reduced-motion` check — if you find yourself adding one, the tree-wide mechanism has likely broken down and that's the bug to fix, not the check to add.
+- Every file in `shared/motion/` carries `"use client"` — this is the only client boundary this sprint introduces. `shared/layout/` primitives are all Server Components; a layout primitive may wrap a motion primitive as `children` without itself becoming client (the same boundary pattern `Section`/`Container` already rely on).
+- Motion tokens (durations, easings, distances, the shared viewport config) live in `lib/motion/tokens.ts` — pure constants, no JSX, per §3's `lib/` rule. Framer Motion consumes numeric seconds and cubic-bezier arrays, not CSS custom properties, so these can't simply reuse `globals.css` tokens.
+- `Presence` (`components/shared/motion/presence.tsx`) wraps `AnimatePresence` purely so exit animations are reached through the same `@/components/shared/motion` surface as entrances, not because it adds behavior.
+
+**Layout — composition over configuration, no retrofit of existing components.**
+
+- `Stack`, `Cluster`, `Grid`, `SplitSection`, and `MediaBlock` generalize shapes that `Section`/`Container` (spacing rhythm), `FeatureGrid` (a hand-rolled grid), and `Hero` (a hand-rolled two-column split) already each implement inline for their own use. Deliberately, none of those existing components were refactored to use the new primitives in this sprint — that would be an unrequested change to working feature components. Consolidating them is a tracked future opportunity, not a decision made here.
+- All five are Server Components with no interactivity; style axes (`space`, `align`, `justify`, `cols`, `gap`) are expressed via `cva` so they're enumerable and map directly to future Storybook `argTypes`, per §5.
+
+## 8. Checklist Before Adding a New `ui/` Primitive
 
 - [ ] Does shadcn (or the underlying `@base-ui/react` package this project uses in place of Radix) already have this primitive? Adapt it; don't build from scratch (`PROJECT_BLUEPRINT.md` §5).
 - [ ] Styled exclusively with semantic tokens — no raw hex, no arbitrary Tailwind color utilities.
