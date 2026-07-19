@@ -35,14 +35,17 @@ src/
   app/            Route segments only. Pages, layouts, loading/error states,
                    route handlers, and route-level metadata. No business
                    logic lives here beyond composition of components.
+                   Also holds Next.js's file-convention SEO routes:
+                   sitemap.ts, robots.ts, opengraph-image.tsx,
+                   twitter-image.tsx. See docs/SEO_GUIDE.md.
   components/
     ui/            Low-level, unopinionated primitives (buttons, inputs,
                    dialogs). Sourced from or shaped like shadcn/ui.
                    These know nothing about the product — they are the
                    vocabulary, not the sentences.
     shared/        Cross-page composition primitives (layout helpers,
-                   animation wrappers, containers, section scaffolding).
-                   Product-aware but not page-specific.
+                   animation wrappers, containers, section scaffolding,
+                   JsonLd, PageShell). Product-aware but not page-specific.
       motion/      Framer Motion entrance/orchestration primitives
                    (FadeIn, SlideUp, ScaleIn, Reveal, Stagger/StaggerItem,
                    Presence) plus the MotionProvider that configures
@@ -66,9 +69,14 @@ src/
                    generic layout helpers.
   config/          Static, typed configuration: site metadata, navigation
                    structures, feature flags, environment-derived constants.
+                   routes.ts is the registry of indexable routes that
+                   drives sitemap.ts — see docs/SEO_GUIDE.md.
   lib/             Framework-agnostic utilities, helpers, and business
                    logic with no JSX. If it doesn't touch the DOM or React,
                    it belongs here, not in components/.
+    seo/           Metadata, JSON-LD, and site-URL resolution helpers
+                   consumed by app/ route metadata and the SEO file-
+                   convention routes. See docs/SEO_GUIDE.md.
   hooks/           Custom React hooks shared across more than one component.
                    (Created when the first shared hook is needed.)
   types/           Shared TypeScript types and interfaces that span more
@@ -158,6 +166,8 @@ Rules that govern this structure:
 - **Accessibility is verified with both automated tooling and manual keyboard/screen-reader passes** before a page is considered complete — automated tools catch a minority of real issues and are a floor, not a ceiling.
 
 ## 11. SEO Standards
+
+Practical companion: [`SEO_GUIDE.md`](./SEO_GUIDE.md) — the _how_ for `buildPageMetadata`, `JsonLd`, `PageShell`, and the sitemap/robots route registry.
 
 - **Every route defines its own metadata** (title, description, canonical URL, Open Graph and Twitter card data) via the Next.js Metadata API — no page ships with default or duplicated metadata inherited unintentionally from its layout.
 - **One `h1` per page**, matching the page's primary intent, followed by a logical, non-skipping heading hierarchy.
@@ -297,7 +307,7 @@ Before any page or feature is considered done, it clears the following:
 This starter is expected to evolve. Items below are directional, not committed timelines — they are recorded so future decisions build on stated intent rather than rediscovering it.
 
 - **Testing infrastructure.** Introduce a unit/component testing setup and a baseline of tests for shared and ui-tier components before this starter is used on a client engagement with more than one contributor.
-- **Content layer.** Evaluate a typed content/CMS integration (headless CMS or MDX-based) once a project requires client-editable content beyond what hardcoded config supports.
+- **Content layer.** Evaluate a typed content/CMS integration (headless CMS or MDX-based) once a project requires client-editable content beyond what hardcoded config supports. Distinct from the SEO/metadata infrastructure in `lib/seo/` (`SEO_GUIDE.md`), which is content-source-agnostic and doesn't need to wait on this.
 - **Component library documentation.** As `components/ui` and `components/shared` grow, introduce a lightweight, browsable catalog (e.g. Storybook or an internal docs route) so the design system is inspectable independent of any one project's pages.
 - **Analytics and monitoring baseline.** Standardize a default privacy-respecting analytics and error-monitoring integration so new engagements start with visibility into real-world performance and errors, not just synthetic scores.
 - **Internationalization readiness.** Revisit folder and routing architecture (Section 3) if and when a client engagement requires multi-locale support, rather than speculatively building it in now.

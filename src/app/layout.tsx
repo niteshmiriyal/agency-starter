@@ -3,8 +3,11 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 
 import { siteConfig } from '@/config/site';
+import { buildPageMetadata } from '@/lib/seo/metadata';
+import { organizationJsonLd, websiteJsonLd } from '@/lib/seo/json-ld';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
+import { JsonLd } from '@/components/shared/json-ld';
 import { MotionProvider } from '@/components/shared/motion/motion-provider';
 
 const geistSans = Geist({
@@ -17,26 +20,14 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: {
     default: siteConfig.name,
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
-  metadataBase: new URL(siteConfig.url),
-  openGraph: {
-    title: siteConfig.name,
-    description: siteConfig.description,
-    url: siteConfig.url,
-    siteName: siteConfig.name,
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: siteConfig.name,
-    description: siteConfig.description,
-  },
-};
+  path: '/',
+});
 
 export default function RootLayout({
   children,
@@ -50,6 +41,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <body className="flex min-h-screen flex-col antialiased">
+        <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
         <MotionProvider>
           <Header />
           <main className="flex-1">{children}</main>

@@ -108,7 +108,16 @@ Sprint 3 added a motion system and a layout system, both living in the `shared/`
 - `Stack`, `Cluster`, `Grid`, `SplitSection`, and `MediaBlock` generalize shapes that `Section`/`Container` (spacing rhythm), `FeatureGrid` (a hand-rolled grid), and `Hero` (a hand-rolled two-column split) already each implement inline for their own use. Deliberately, none of those existing components were refactored to use the new primitives in this sprint — that would be an unrequested change to working feature components. Consolidating them is a tracked future opportunity, not a decision made here.
 - All five are Server Components with no interactivity; style axes (`space`, `align`, `justify`, `cols`, `gap`) are expressed via `cva` so they're enumerable and map directly to future Storybook `argTypes`, per §5.
 
-## 8. Checklist Before Adding a New `ui/` Primitive
+## 8. SEO Primitives (`components/shared/json-ld.tsx`, `components/shared/page-shell.tsx`)
+
+Sprint 4 added two more `shared/`-tier primitives, alongside the metadata/JSON-LD builder functions in `lib/seo/`. Usage-level documentation and examples live in [`SEO_GUIDE.md`](./SEO_GUIDE.md); this section covers the architecture.
+
+- `JsonLd` (`components/shared/json-ld.tsx`) takes a `data: object | object[]` prop and renders it as a `<script type="application/ld+json">` tag, escaping angle brackets in the serialized output so a value can never break out of the script tag. It has no opinion about what schema.org shape it's given — that logic lives in the pure builder functions in `lib/seo/json-ld.ts` (`organizationJsonLd`, `websiteJsonLd`, `breadcrumbJsonLd`), matching the split between `lib/motion/tokens.ts` (data) and the motion primitives (rendering) in §7.
+- `PageShell` (`components/shared/page-shell.tsx`) is the scaffold for non-home marketing pages: an optional accessible breadcrumb trail (native `next/link` anchors, `aria-current="page"` on the active crumb) plus its matching `BreadcrumbList` JSON-LD, rendered via `JsonLd`. It does not dictate section content — a page still composes `Section`/`Container`/motion primitives inside `PageShell`'s `children`, the same way pages already compose those without it.
+- Both are Server Components; neither introduces a client boundary.
+- `PageShell` is deliberately **not** wired into `app/page.tsx` — the homepage has no breadcrumb trail to show, and existing page content is not restructured onto new primitives without being asked (this repo's homepage is treated as a working sandbox, not something to migrate opportunistically). It's ready for the first real subpage a project adds.
+
+## 9. Checklist Before Adding a New `ui/` Primitive
 
 - [ ] Does shadcn (or the underlying `@base-ui/react` package this project uses in place of Radix) already have this primitive? Adapt it; don't build from scratch (`PROJECT_BLUEPRINT.md` §5).
 - [ ] Styled exclusively with semantic tokens — no raw hex, no arbitrary Tailwind color utilities.
