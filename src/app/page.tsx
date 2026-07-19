@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import {
   ArrowRight,
   CheckCircle2,
@@ -8,10 +9,17 @@ import {
   Zap,
 } from 'lucide-react';
 
+import { siteConfig } from '@/config/site';
+import { buildPageMetadata } from '@/lib/seo/metadata';
 import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
 import { Section } from '@/components/shared/section';
 import { FadeIn } from '@/components/shared/fade-in';
+
+export const metadata: Metadata = buildPageMetadata({
+  title: 'Home',
+  description: siteConfig.description,
+});
 
 const features = [
   {
